@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.venv/
+credentials.json
+database/gmail-token.json
+database/*.sqlite3
+uploads/*
+!uploads/.gitkeep

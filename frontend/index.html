@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Job Agent | Resume Analyzer</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231d5638'/%3E%3Cpath d='M18 18h28v8H26v8h16v8H26v12h-8z' fill='white'/%3E%3C/svg%3E">
+  <style>
+    :root { color-scheme: light; font-family: Georgia, 'Times New Roman', serif; color: #17211b; background: #eef3ec; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: linear-gradient(135deg, #eef3ec, #dce8df); }
+    main { width: min(860px, calc(100% - 32px)); margin: 0 auto; padding: 72px 0; }
+    .eyebrow { color: #47735a; font: 700 12px/1.2 Arial, sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { max-width: 650px; margin: 14px 0; font-size: clamp(42px, 8vw, 78px); line-height: .98; font-weight: 500; }
+    .intro { max-width: 560px; margin: 0 0 34px; color: #59675d; font: 17px/1.6 Arial, sans-serif; }
+    .upload-box { padding: 28px; border: 2px dashed #789a80; border-radius: 8px; background: rgba(255,255,255,.7); }
+    input[type=file] { width: 100%; padding: 20px; border: 1px solid #bdcdbf; border-radius: 6px; background: #fff; font: 15px Arial, sans-serif; }
+    button { margin-top: 18px; padding: 13px 20px; border: 0; border-radius: 5px; background: #1d5638; color: white; cursor: pointer; font: 700 15px Arial, sans-serif; }
+    button:disabled { opacity: .55; cursor: wait; }
+    #status { margin-top: 20px; color: #59675d; font: 14px Arial, sans-serif; }
+    #result { display: none; margin-top: 28px; padding: 26px; border-radius: 8px; background: #fff; box-shadow: 0 12px 30px rgba(29, 86, 56, .12); font-family: Arial, sans-serif; }
+    #jobs, #application { display: none; margin-top: 28px; }
+    #mail { margin-top: 28px; padding: 22px; border-top: 1px solid #bdcdbf; }
+    #mail-updates { margin-top: 16px; font: 14px/1.5 Arial, sans-serif; }
+    .mail-item { margin-top: 10px; padding: 12px; border-left: 3px solid #789a80; background: rgba(255,255,255,.65); }
+    .job { display: flex; justify-content: space-between; gap: 20px; align-items: center; margin-top: 12px; padding: 18px; border: 1px solid #cbd9ce; border-radius: 6px; background: rgba(255,255,255,.8); font-family: Arial, sans-serif; }
+    .job h3 { margin: 0 0 6px; font: 700 17px Arial, sans-serif; }
+    .job p { margin: 0; color: #59675d; font: 14px/1.5 Arial, sans-serif; }
+    .match { color: #1d5638; font-weight: 700; white-space: nowrap; }
+    textarea { width: 100%; min-height: 190px; margin-top: 8px; padding: 14px; border: 1px solid #bdcdbf; border-radius: 6px; font: 14px/1.5 Arial, sans-serif; }
+    .approve { background: #a44b2b; }
+    @media (max-width: 600px) { .job { display: block; } .job button { width: 100%; } .match { display: block; margin-top: 12px; } }
+    .score { color: #1d5638; font: 700 42px Georgia, serif; }
+    h2 { margin-top: 0; font: 500 26px Georgia, serif; }
+    ul { padding-left: 20px; line-height: 1.7; }
+    .error { color: #9b352d; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">AI Job Agent</div>
+    <h1>Start with your resume.</h1>
+    <p class="intro">Upload a PDF or DOCX and get a quick ATS analysis with detected skills and practical improvements.</p>
+    <section class="upload-box">
+      <input id="resume" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+      <button id="upload" type="button">Analyze resume</button>
+      <div id="status" role="status"></div>
+    </section>
+    <section id="result"></section>
+    <section id="jobs">
+      <h2>Matching companies</h2>
+      <div id="job-list"></div>
+    </section>
+    <section id="application">
+      <h2 id="application-title"></h2>
+      <p>Review your application before approving it.</p>
+      <label for="cover-letter">Cover letter</label>
+      <textarea id="cover-letter"></textarea>
+      <button class="approve" id="approve" type="button">Approve application</button>
+      <div id="application-status" role="status"></div>
+    </section>
+    <section id="mail">
+      <h2>Recruiting email updates</h2>
+      <p>Connect Gmail to find interview, assessment, offer, and application updates.</p>
+      <button id="connect-gmail" type="button">Connect Gmail</button>
+      <button id="refresh-mail" type="button">Refresh updates</button>
+      <div id="mail-updates" role="status"></div>
+    </section>
+  </main>
+  <script>
+    const input = document.getElementById('resume');
+    const button = document.getElementById('upload');
+    const status = document.getElementById('status');
+    const result = document.getElementById('result');
+    const jobsPanel = document.getElementById('jobs');
+    const jobList = document.getElementById('job-list');
+    const applicationPanel = document.getElementById('application');
+    const applicationTitle = document.getElementById('application-title');
+    const coverLetter = document.getElementById('cover-letter');
+    const approveButton = document.getElementById('approve');
+    const applicationStatus = document.getElementById('application-status');
+    const connectGmail = document.getElementById('connect-gmail');
+    const refreshMail = document.getElementById('refresh-mail');
+    const mailUpdates = document.getElementById('mail-updates');
+    let parsedResume;
+    let pendingApplication;
+    button.addEventListener('click', async () => {
+      if (!input.files.length) { status.textContent = 'Choose a PDF or DOCX resume first.'; return; }
+      const data = new FormData();
+      data.append('file', input.files[0]);
+      button.disabled = true;
+      result.style.display = 'none';
+      status.textContent = 'Analyzing your resume...';
+      try {
+        const response = await fetch('/resume/upload', { method: 'POST', body: data });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.detail || 'Upload failed.');
+        const analysis = payload.analysis;
+        const resume = payload.resume;
+        parsedResume = resume;
+        result.innerHTML = `<h2>${resume.name || 'Resume'} analyzed</h2><div class="score">${analysis.ats_score}/100</div><p>ATS score</p><p><strong>Detected skills:</strong> ${analysis.detected_skills.join(', ') || 'None detected'}</p><h3>Suggestions</h3><ul>${analysis.suggestions.map(item => `<li>${item}</li>`).join('') || '<li>Your resume is ready for matching.</li>'}</ul>`;
+        result.style.display = 'block';
+        status.textContent = 'Resume uploaded successfully.';
+        await loadJobs();
+      } catch (error) {
+        status.textContent = error.message;
+        status.className = 'error';
+      } finally { button.disabled = false; }
+    });
+
+    async function loadJobs() {
+      const response = await fetch('/jobs/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: '', resume: parsedResume }) });
+      const payload = await response.json();
+      jobList.innerHTML = payload.jobs.map(job => `<article class="job"><div><h3>${job.title}</h3><p>${job.company} · ${job.location}<br>Skills: ${job.skills.join(', ')}</p></div><div><span class="match">${job.match_score}% match</span><br><button type="button" data-job='${JSON.stringify(job)}'>Prepare application</button></div></article>`).join('');
+      jobsPanel.style.display = 'block';
+      jobList.querySelectorAll('[data-job]').forEach(item => item.addEventListener('click', () => prepareApplication(JSON.parse(item.dataset.job))));
+    }
+
+    async function prepareApplication(job) {
+      const response = await fetch('/applications/prepare', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resume: parsedResume, job }) });
+      const payload = await response.json();
+      pendingApplication = payload.application;
+      applicationTitle.textContent = `Apply to ${pendingApplication.company}`;
+      coverLetter.value = pendingApplication.cover_letter;
+      applicationStatus.textContent = 'Application prepared and waiting for your approval.';
+      applicationPanel.style.display = 'block';
+      applicationPanel.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    approveButton.addEventListener('click', async () => {
+      pendingApplication.cover_letter = coverLetter.value;
+      approveButton.disabled = true;
+      const response = await fetch('/applications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pendingApplication) });
+      const payload = await response.json();
+      applicationStatus.textContent = response.ok ? `Application approved and saved as #${payload.id}.` : 'Could not save the application.';
+      approveButton.disabled = false;
+    });
+
+    connectGmail.addEventListener('click', () => { window.location.href = '/gmail/login'; });
+    refreshMail.addEventListener('click', async () => {
+      refreshMail.disabled = true;
+      mailUpdates.textContent = 'Checking Gmail...';
+      try {
+        const response = await fetch('/gmail/updates');
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.detail || 'Gmail is not connected.');
+        mailUpdates.innerHTML = payload.updates.length ? payload.updates.map(update => `<div class="mail-item"><strong>${update.notification.title}</strong><br>${update.subject}<br><small>${update.from}</small></div>`).join('') : 'No recruiting updates found in the last 30 days.';
+      } catch (error) { mailUpdates.textContent = error.message; }
+      finally { refreshMail.disabled = false; }
+    });
+  </script>
+</body>
+</html>
