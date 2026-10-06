@@ -1,9 +1,8 @@
+import shutil
 import sys
 from pathlib import Path
 from typing import Any
-import shutil
 
-# Allow running directly or via multiprocessing without package context
 if not __package__:
     project_root = Path(__file__).resolve().parent.parent
     if str(project_root) not in sys.path:
@@ -18,12 +17,18 @@ from pydantic import BaseModel
 from .application_agent import prepare_application, save_application
 from .database import initialize_database, list_applications
 from .email_agent import classify_email
-from .gmail_agent import complete_authorization, fetch_updates, get_authorization_url
 from .job_matcher import rank_jobs
-from .job_search import search_jobs
+from .job_search import refresh_jobs, search_jobs
 from .notification_agent import build_notification
 from .resume_analyzer import analyze_resume
 from .resume_parser import parse_resume
+
+try:
+    from .gmail_agent import complete_authorization, fetch_updates, get_authorization_url
+except Exception:  # pragma: no cover - Gmail is optional for app startup
+    complete_authorization = None
+    fetch_updates = None
+    get_authorization_url = None
 
 ROOT = Path(__file__).resolve().parent.parent
 UPLOADS = ROOT / "uploads"
@@ -71,7 +76,13 @@ async def upload_resume(file: UploadFile = File(...)) -> dict[str, Any]:
 
 @app.post("/jobs/search")
 def jobs_search(request: JobSearchRequest) -> dict[str, Any]:
-    return {"jobs": rank_jobs(request.resume, search_jobs(request.query, request.location))}
+    jobs = search_jobs(request.query, request.location)
+    return {"jobs": rank_jobs(request.resume, jobs)}
+
+
+@app.get("/jobs/refresh")
+def jobs_refresh() -> dict[str, Any]:
+    return {"jobs": refresh_jobs()}
 
 
 @app.post("/applications/prepare")
@@ -97,6 +108,8 @@ def email_classify(request: EmailRequest) -> dict[str, Any]:
 
 @app.get("/gmail/login")
 def gmail_login() -> RedirectResponse:
+    if get_authorization_url is None:
+        raise HTTPException(status_code=503, detail="Gmail integration is disabled. Install/google-auth packages and configure credentials.")
     try:
         return RedirectResponse(get_authorization_url())
     except FileNotFoundError as error:
@@ -105,6 +118,8 @@ def gmail_login() -> RedirectResponse:
 
 @app.get("/gmail/callback")
 def gmail_callback(code: str, state: str | None = None) -> RedirectResponse:
+    if complete_authorization is None:
+        raise HTTPException(status_code=503, detail="Gmail integration is disabled.")
     try:
         complete_authorization(code, state)
     except (FileNotFoundError, ValueError) as error:
@@ -114,13 +129,17 @@ def gmail_callback(code: str, state: str | None = None) -> RedirectResponse:
 
 @app.get("/gmail/updates")
 def gmail_updates() -> dict[str, Any]:
+    if fetch_updates is None:
+        raise HTTPException(status_code=503, detail="Gmail integration is disabled.")
     try:
         return {"updates": fetch_updates()}
     except PermissionError as error:
         raise HTTPException(status_code=401, detail=str(error)) from error
 
 
-app.mount("/", StaticFiles(directory=ROOT / "frontend", html=True), name="frontend")
+frontend_dir = ROOT / "frontend"
+if frontend_dir.exists():
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
 
 if __name__ == "__main__":
