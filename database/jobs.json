@@ -1,0 +1,24 @@
+{
+  "jobs": [
+    {"id": "demo-1", "title": "Python Backend Engineer", "company": "Northstar Labs", "location": "Remote", "skills": ["python", "fastapi", "sql", "postgresql"]},
+    {"id": "demo-2", "title": "Full Stack Developer", "company": "Cedar Systems", "location": "New York", "skills": ["javascript", "react", "sql", "nodejs"]},
+    {"id": "demo-3", "title": "Cloud Software Engineer", "company": "Blue Harbor", "location": "Remote", "skills": ["python", "docker", "azure", "aws"]},
+    {"id": "demo-4", "title": "Data Engineer", "company": "Atlas Analytics", "location": "Austin", "skills": ["python", "sql", "spark", "etl"]},
+    {"id": "demo-5", "title": "ML Engineer", "company": "VisionForge", "location": "Remote", "skills": ["python", "machine learning", "pytorch", "model deployment"]},
+    {"id": "demo-6", "title": "DevOps Engineer", "company": "Nimbus Cloud", "location": "Chicago", "skills": ["docker", "kubernetes", "aws", "linux"]},
+    {"id": "demo-7", "title": "Frontend Engineer", "company": "Pixel Harbor", "location": "Remote", "skills": ["javascript", "react", "typescript", "css"]},
+    {"id": "demo-8", "title": "Backend Engineer", "company": "SummitIQ", "location": "Boston", "skills": ["python", "django", "rest api", "redis"]},
+    {"id": "demo-9", "title": "Security Engineer", "company": "Horizon Secure", "location": "San Francisco", "skills": ["python", "cybersecurity", "aws", "security tools"]},
+    {"id": "demo-10", "title": "Platform Engineer", "company": "HarborOne", "location": "Remote", "skills": ["kubernetes", "terraform", "aws", "linux"]},
+    {"id": "demo-11", "title": "Python Developer", "company": "StackForge", "location": "Remote", "skills": ["python", "flask", "api", "redis"]},
+    {"id": "demo-12", "title": "Senior Software Engineer", "company": "LumaWorks", "location": "Seattle", "skills": ["python", "java", "microservices", "design"]},
+    {"id": "demo-13", "title": "AI Engineer", "company": "Signal Harbor", "location": "Remote", "skills": ["python", "machine learning", "llm", "prompt engineering"]},
+    {"id": "demo-14", "title": "Site Reliability Engineer", "company": "Cloud Thread", "location": "Denver", "skills": ["linux", "kubernetes", "aws", "monitoring"]},
+    {"id": "demo-15", "title": "Automation Engineer", "company": "Fjord Systems", "location": "Remote", "skills": ["python", "automation", "bash", "ci cd"]},
+    {"id": "demo-16", "title": "Product Engineer", "company": "Verve Labs", "location": "Remote", "skills": ["javascript", "typescript", "react", "product development"]},
+    {"id": "demo-17", "title": "Data Scientist", "company": "BrightPath AI", "location": "Remote", "skills": ["python", "statistics", "machine learning", "sql"]},
+    {"id": "demo-18", "title": "Infrastructure Engineer", "company": "PeakForge", "location": "Los Angeles", "skills": ["aws", "terraform", "docker", "linux"]},
+    {"id": "demo-19", "title": "Frontend Developer", "company": "Aster Labs", "location": "New York", "skills": ["javascript", "react", "css", "ui design"]},
+    {"id": "demo-20", "title": "Software Engineer", "company": "Northwind", "location": "Remote", "skills": ["python", "java", "microservices", "database"]}
+  ]
+}
