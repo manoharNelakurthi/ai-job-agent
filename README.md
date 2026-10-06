@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AI Job Agent
 
 A modular resume-to-job-application workflow.
@@ -24,3 +25,6 @@ The current implementation uses deterministic local parsing, demo job data, SQLi
 4. Click **Connect Gmail** and approve the read-only Gmail permission.
 
 The app searches the last 30 days for recruiting messages and classifies interview, assessment, offer, rejection, and application updates. It stores the OAuth token locally in `database/gmail-token.json`; do not commit that file.
+=======
+# ai-job-agent
+>>>>>>> b6823cc685ebd4a2d25439af01780920827e3128
